@@ -1,0 +1,29 @@
+# Private runtime data and credentials
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+.env
+.env.*
+!.env.example
+.aliyun/
+.config/
+*credentials*
+*token*
+
+# Runtime output and maintenance scratch files
+__pycache__/
+*.py[cod]
+*.log
+*.log.*
+engine-jobs/
+backup-*/
+local-backup-*/
+*.bak*
+*.gz
+*.zip
+diagnose-*
+cleanup-regression.py
+work/

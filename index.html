@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#102d2d">
+  <title>一局 · 中国象棋</title>
+  <link rel="preload" href="piece-glyphs.png?v=1" as="image">
+  <link rel="stylesheet" href="styles.css?v=31">
+</head>
+<body>
+  <main class="home-screen" id="homeScreen">
+    <div class="home-inner">
+      <div class="account-strip">
+        <button class="history-entry" id="historyButton">对局记录 <b id="historyCount">0</b></button>
+        <button id="accountButton">登录 / 注册</button>
+        <div class="user-menu" id="userMenu" hidden><span>棋手 · <strong id="accountName"></strong></span><button id="logoutButton">退出</button></div>
+      </div>
+      <header class="home-heading">
+        <span class="home-seal">一局</span>
+        <div>
+          <p class="eyebrow">中国象棋</p>
+          <h1>选一位对手</h1>
+          <p class="home-lead">落子无悔，先开一局。</p>
+        </div>
+      </header>
+
+      <section class="mode-grid" aria-label="选择对战模式">
+        <button class="mode-card mode-ai" id="aiModeButton">
+          <span class="mode-piece">将</span>
+          <span class="mode-copy"><small>挑战引擎</small><strong>人机对战</strong><em>Pikafish 实时分析与推荐</em></span>
+          <span class="mode-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="mode-card mode-human" id="humanModeButton">
+          <span class="mode-piece">友</span>
+          <span class="mode-copy"><small>好友房间</small><strong>真人对战</strong><em>创建或加入在线棋局</em></span>
+          <span class="mode-arrow" aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <button class="custom-entry" id="customModeButton"><strong>自定义棋盘</strong><span>自由摆棋，从残局开始挑战</span><b aria-hidden="true">→</b></button>
+
+      <div class="engine-badge" id="engineBadge">
+        <i></i><span>正在连接引擎</span>
+      </div>
+    </div>
+  </main>
+
+  <section class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
+    <div class="auth-card">
+      <button class="auth-close" id="authClose" aria-label="暂不登录">×</button>
+      <div class="auth-mark">棋手帖</div>
+      <h2 id="authTitle">登录棋室</h2>
+      <p id="authLead">登录后可进入真人对战。</p>
+      <div class="auth-tabs" role="tablist">
+        <button id="loginTab" class="active" role="tab" aria-selected="true">登录</button>
+        <button id="registerTab" role="tab" aria-selected="false">注册</button>
+      </div>
+      <form id="authForm">
+        <label>用户名<input id="authUsername" autocomplete="username" maxlength="20" required placeholder="3–20位"></label>
+        <label>密码<input id="authPassword" type="password" autocomplete="current-password" maxlength="72" required placeholder="至少6位"></label>
+        <p class="auth-error" id="authError" role="alert"></p>
+        <button class="auth-submit" id="authSubmit" type="submit">登录</button>
+      </form>
+      <button class="auth-skip" id="authSkip">暂不登录，继续人机对战</button>
+    </div>
+  </section>
+
+  <section class="auth-modal room-modal" id="roomModal" role="dialog" aria-modal="true" aria-labelledby="roomTitle" hidden>
+    <div class="auth-card room-card">
+      <button class="auth-close" id="roomClose" aria-label="关闭">×</button>
+      <div class="auth-mark">好友对弈</div>
+      <h2 id="roomTitle">进入好友房间</h2>
+      <p>创建房间后，把六位房间码发给好友。</p>
+      <button class="create-room" id="createRoomButton">创建新房间</button>
+      <div class="room-divider"><span>或</span></div>
+      <form id="joinRoomForm">
+        <label>房间码<input id="roomCodeInput" maxlength="6" autocomplete="off" inputmode="text" placeholder="例如 A3K9QH" required></label>
+        <p class="auth-error" id="roomError" role="alert"></p>
+        <button class="auth-submit" id="joinRoomButton" type="submit">加入房间</button>
+      </form>
+    </div>
+  </section>
+
+  <main class="shell game-shell" id="gameScreen" hidden>
+    <nav class="game-nav" aria-label="棋局导航">
+      <button id="settingsButton" aria-haspopup="true" aria-expanded="false">⚙ 设置</button>
+      <strong id="modeTitle">人机对战</strong>
+      <button class="mode-note" id="modeNote" disabled>对手 · Pikafish</button>
+    </nav>
+
+    <div class="settings-panel" id="settingsPanel" hidden>
+      <div class="settings-card" role="dialog" aria-modal="true" aria-label="设置">
+        <div class="settings-head">
+          <strong>设置</strong>
+          <button class="settings-close" id="settingsClose" aria-label="关闭设置">×</button>
+        </div>
+        <div class="settings-row">
+          <span>音效</span>
+          <label class="switch" title="开/关落子音效">
+            <input type="checkbox" id="soundToggle" aria-label="音效开关">
+            <i aria-hidden="true"></i>
+          </label>
+        </div>
+        <div class="settings-row"><span>实时胜率分析</span><button id="analysisToggle" aria-pressed="true">暂停</button></div>
+        <div class="game-preferences">          <label class="depth-control ai-only">
+            <span>思考强度</span>
+            <select id="depth">
+              <option value="3">入门</option>
+              <option value="5">轻快</option>
+              <option value="8" selected>均衡</option>
+              <option value="10">加强</option>
+              <option value="12">深入</option>
+              <option value="14">巅峰</option>
+            </select>
+          </label>
+          <label class="depth-control side-choice" id="sideChoice">
+            <span>我方执子</span>
+            <select id="playerSide">
+              <option value="red" selected>红方 · 先行</option>
+              <option value="black">黑方 · 后行</option>
+            </select>
+          </label>
+<p class="seat-help">更换执子会重新开局。</p></div>
+        <button class="settings-home ai-only" id="editPositionButton">编辑当前棋盘</button>
+        <button class="settings-home" id="backHome">← 返回主页</button>
+      </div>
+    </div>
+
+    <section class="game-layout">
+      <div class="board-stage">
+        <div class="board-toolbar"><div class="turn-ribbon" id="turnRibbon">红方行棋</div><button id="flipBoard" aria-pressed="false">反转棋盘</button></div>
+        <div class="board-wrap">
+          <canvas id="board" aria-label="中国象棋棋盘" tabindex="0"></canvas>
+        </div>
+        <div class="board-evaluation" aria-label="实时胜率" data-stale="true">
+          <div class="evaluation-feedback"><p class="evaluation-status" id="analysisState" role="status">等待分析</p><button id="analysisRetry" hidden>重新分析</button></div>
+          <div class="win-bar" aria-hidden="true">
+            <i class="red-win" id="redBar"></i><i class="draw-win" id="drawBar"></i><i class="black-win" id="blackBar"></i>
+          </div>
+          <div class="rate-labels"><span>红方 <b id="redRate">—</b></span><span id="drawRate">和棋 —</span><span>黑方 <b id="blackRate">—</b></span></div>
+        </div>
+          <div class="review-progress" id="reviewProgress" hidden>
+            <span id="reviewMoveLabel">开局</span>
+            <div class="review-track" aria-hidden="true"><i id="reviewTrack"></i></div>
+            <div class="review-controls" aria-label="复盘进度控制">
+              <button id="reviewStart" aria-label="回到开局">开局</button>
+              <button id="reviewPrev" aria-label="上一步">上一步</button>
+              <button id="reviewNext" aria-label="下一步">下一步</button>
+              <button id="reviewEnd" aria-label="跳到结尾">结尾</button>
+            </div>
+          </div>
+        <section class="editor-panel" id="editorPanel" hidden aria-label="自定义棋盘工具">
+          <div class="editor-heading"><strong>摆放棋子</strong><button id="editorCancel">取消</button></div>
+          <p class="editor-guide">选下方棋子，再点棋盘。可反转视角。</p>
+          <div class="piece-palette red-palette" id="redPalette" role="group" aria-label="红方棋子"></div>
+          <div class="piece-palette black-palette" id="blackPalette" role="group" aria-label="黑方棋子"></div>
+          <div class="editor-tools"><button data-editor-tool="move" aria-pressed="true">移动棋子</button><button data-editor-tool="erase" aria-pressed="false">移除棋子</button><button id="editorUndo" disabled>撤销摆放</button></div>
+          <div class="editor-tools editor-reset"><button id="editorClear">清空棋盘</button><button id="editorReset">标准开局</button></div>
+          <div class="editor-options"><label>先行方<select id="editorTurn"><option value="red">红方先行</option><option value="black">黑方先行</option></select></label><label>我方执子<select id="editorSide"><option value="red">执红</option><option value="black">执黑</option></select></label></div>
+          <p class="editor-error" id="editorError" role="alert"></p>
+          <button class="editor-start" id="editorStart">从此局面开始对战</button>
+        </section>
+        <p class="board-hint" id="boardHint">点击棋子，再点击落点。你执红先行。</p>
+        <div class="board-legend"><span class="ai-only"><i class="recommend-key"></i>推荐走法</span><span><i class="history-key"></i>对方上一步</span></div>
+      </div>
+
+      <aside class="side-panel">
+        <section class="review-panel" id="reviewPanel" hidden aria-label="对局复盘">
+          <div class="review-heading">
+            <div><strong>对局记录</strong></div>
+            <span id="reviewTotal">0 局</span>
+          </div>
+          <div class="record-list" id="recordList"></div>
+          <div class="review-empty" id="reviewEmpty" hidden>
+            <strong>还没有可复盘的对局</strong>
+            <span>完成第一步落子后，会自动保存在这里。</span>
+          </div>
+        </section>
+        <div class="match-card">
+          <div class="player black-player">
+            <span class="avatar" id="opponentAvatar">魚</span>
+            <div><small>对手</small><strong id="opponentName">本地棋手</strong></div>
+            <span class="side-tag" id="opponentSideTag">黑</span>
+          </div>
+          <div class="opponent-echo" id="opponentEcho">
+            <small>对方上一步</small><strong id="opponentMove">等待对手落子</strong>
+          </div>
+          <div class="versus"><span></span><b>对局中</b><span></span></div>
+          <div class="player">
+            <span class="avatar red-avatar" id="humanAvatar">你</span>
+            <div><small>本机</small><strong id="humanSeat">执红</strong></div>
+            <span class="side-tag red-tag" id="humanSideTag">红</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="custom-actions" id="customActions" hidden><button id="controlOpponent" aria-pressed="false">控制对方</button><button id="editCurrentBoard">编辑当前棋盘</button></div>
+          <button class="primary" id="newGame">重新开局</button>
+          <button id="undo">悔棋</button>
+          <button class="recommend-action ai-only" id="recommendButton" aria-pressed="false">查看推荐</button>
+            <div class="recommend-row ai-only">
+              <div class="recommend-copy">
+                <small>推荐走法</small>
+                <strong id="bestMove" aria-live="polite">点击按钮获取</strong>
+              </div>
+            </div>
+          <p class="rule-status"><i></i>重复将军禁手已开启</p>
+        </div>
+
+        <section class="analysis-card" aria-label="实时局面分析">
+          <div class="section-title">
+            <span id="analysisTitle">实时胜率</span>
+            <div class="section-actions"><span class="live-mark">皮卡鱼分析</span></div>
+          </div>
+          <div class="analysis-body">
+            <div class="analysis-meta"><span>分析深度 <b id="analysisDepth">—</b></span></div>
+          </div>
+        </section>
+
+        <section class="ledger">
+          <div class="section-title"><span>着法记录</span><button id="copyFen" title="复制当前 FEN">复制局面</button></div>
+          <ol id="moveList"><li class="empty">落子后将在这里记录</li></ol>
+        </section>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="rules-core.js?v=15"></script>
+  <script src="app.js?v=45"></script>
+</body>
+</html>
